@@ -3,15 +3,13 @@ package database.diff;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
-import com.beust.jcommander.converters.BooleanConverter;
 import com.beust.jcommander.converters.FileConverter;
-import database.diff.model.DatabasesInfo;
 import database.diff.comparators.DatabasesComparator;
+import database.diff.model.DatabasesInfo;
 import database.diff.utils.Utils;
 import database.diff.validators.FileParamValidator;
 
 import java.io.File;
-import java.util.Arrays;
 
 public class App
 {

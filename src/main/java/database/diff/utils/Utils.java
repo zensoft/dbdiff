@@ -2,7 +2,12 @@ package database.diff.utils;
 
 import com.beust.jcommander.internal.Lists;
 import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.FluentIterable;
 import database.diff.comparators.AbstractComparator;
+import database.diff.comparators.IndexesComparator;
 import database.diff.comparators.SchemasComparator;
 import database.diff.comparators.TablesComparator;
 import database.diff.conf.DataBaseConnection;
@@ -16,11 +21,15 @@ import org.skife.jdbi.v2.DBI;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
+import static com.google.common.base.Predicates.in;
+import static com.google.common.base.Predicates.not;
+import static database.diff.comparators.Comparator.NEW_LINE;
 import static database.diff.model.DbCredentials.*;
 
 /**
@@ -104,8 +113,24 @@ public class Utils {
     public static List<AbstractComparator> comparators(DatabasesInfo databasesInfo) {
         return Lists.newArrayList(
                 new SchemasComparator(databasesInfo),
-                new TablesComparator(databasesInfo)
+                new TablesComparator(databasesInfo),
+                new IndexesComparator(databasesInfo)
         );
+    }
+
+    public static Collection<String> getCommonList(Collection<String> list1, Collection<String> list2) {
+        return Collections2.filter(list1, in(list2));
+    }
+
+    public static Collection<String> getDiffList(Collection<String> list1, Collection<String> list2) {
+        return Collections2.filter(list1, not(in(list2)));
+    }
+
+    public static String getCompareInfo(Collection<String> iterable, String msgFormat) {
+        return FluentIterable.from(iterable)
+                .transform(s -> {
+                    return String.format(msgFormat, s);
+                }).join(Joiner.on(NEW_LINE));
     }
 
 }

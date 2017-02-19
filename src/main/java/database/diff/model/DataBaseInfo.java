@@ -13,11 +13,17 @@ public class DataBaseInfo {
     private String name;
     private List<String> schemas;
     private Multimap<String, String> schemasTables;
+    private List<String> indexes;
 
     private DataBaseInfo(DataBaseInfoBuilder builder){
         this.name = builder.name;
         this.schemas = builder.schemas;
         this.schemasTables = builder.schemasTables;
+        this.indexes = builder.indexes;
+    }
+
+    public List<String> getIndexes() {
+        return indexes;
     }
 
     public String getName() {
@@ -37,6 +43,12 @@ public class DataBaseInfo {
         private String name;
         private List<String> schemas;
         private Multimap<String, String> schemasTables;
+        private List<String> indexes;
+
+        public DataBaseInfoBuilder indexes(List<String> indexes) {
+            this.indexes = indexes;
+            return this;
+        }
 
         public DataBaseInfoBuilder schemas(List<String> schemas) {
             this.schemas = schemas;

@@ -2,16 +2,12 @@ package database.diff.comparators;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicates;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Multimap;
 import database.diff.model.DatabasesInfo;
+import database.diff.utils.Utils;
 
 import java.util.Collection;
-
-import static com.google.common.base.Predicates.*;
-import static com.google.common.base.Predicates.not;
 
 /**
  * Created by tomek on 18.02.17.
@@ -25,50 +21,49 @@ public class TablesComparator extends AbstractComparator {
     @Override
     public String getResult() {
         stringBuffer.append(getInfo() + NEW_LINE);
-        String data = FluentIterable.from(firstDbSchemasTables().keySet())
-                .transform(s -> commonTableInSchema(s))
-                .join(Joiner.on(NEW_LINE));
+
+        String data = getDataString(firstDbSchemasTables().keySet(), commonTableInSchema());
         stringBuffer.append(data + NEW_LINE);
 
-        data = FluentIterable.from(firstDbSchemasTables().keySet())
-                .transform(s -> diffFirstDbSecondDbInSchema(s)).join(Joiner.on(NEW_LINE));
+        data = getDataString(firstDbSchemasTables().keySet(), diffFirstDbSecondDbInSchema());
         stringBuffer.append(data + DOUBLE_NEW_LINE);
 
-        data = FluentIterable.from(firstDbSchemasTables().keySet())
-                .transform(s -> diffSecondDbFirstDbInSchema(s))
-                .join(Joiner.on(NEW_LINE));
+        data = getDataString(firstDbSchemasTables().keySet(), diffSecondDbFirstDbInSchema());
         stringBuffer.append(data);
-        stringBuffer.append("======================" + NEW_LINE);
+
         return stringBuffer.toString();
     }
 
     @Override
     public String getInfo() {
-        return "Tabele" + NEW_LINE;
+        return "TABELE" + NEW_LINE;
     }
 
-    private String diffFirstDbSecondDbInSchema(final String schema) {
-        Collection<String> filter = Collections2.filter(firstDbSchemasTables().get(schema), not(in(secondDbSchemasTables().get(schema))));
-        String join = FluentIterable.from(filter)
-                .transform(s -> getSecondDbName() + " " + schema + " nie zawiera " + s)
-                .join(Joiner.on(NEW_LINE));
-        return join;
+    private Function<String, String> diffFirstDbSecondDbInSchema() {
+        return schema -> {
+            Collection<String> diffList = Utils.getDiffList(firstDbSchemasTables().get(schema), secondDbSchemasTables().get(schema));
+            return Utils.getCompareInfo(diffList, getSecondDbName() + " " + schema + " nie zawiera %s");
+        };
     }
 
-    private String diffSecondDbFirstDbInSchema(final String schema) {
-        Collection<String> filter = Collections2.filter(secondDbSchemasTables().get(schema), not(in(firstDbSchemasTables().get(schema))));
-        String join = FluentIterable.from(filter)
-                .transform(s -> getFirstDbName() + " " + schema + " nie zawiera " + s)
-                .join(Joiner.on(NEW_LINE));
-        return join;
+    private Function<String, String> diffSecondDbFirstDbInSchema() {
+        return schema -> {
+            Collection<String> diffList = Utils.getDiffList(secondDbSchemasTables().get(schema), firstDbSchemasTables().get(schema));
+            return Utils.getCompareInfo(diffList, getFirstDbName() + " " + schema + " nie zawiera %s");
+        };
     }
 
-    private String commonTableInSchema(String schema) {
-        Collection<String> filter = Collections2.filter(firstDbSchemasTables().get(schema), in(secondDbSchemasTables().get(schema)));
-        String join = FluentIterable.from(filter)
-                .transform(s -> "Wspolne tabele dla " + schema + " " + s)
+    private Function<String, String> commonTableInSchema() {
+        return schema -> {
+            Collection<String> commonList = Utils.getCommonList(firstDbSchemasTables().get(schema), secondDbSchemasTables().get(schema));
+            return Utils.getCompareInfo(commonList, "Wspolne tabele dla " + schema + " %s");
+        };
+    }
+
+    private String getDataString(Collection<String> keySet, Function<String,String> func) {
+        return FluentIterable.from(firstDbSchemasTables().keySet())
+                .transform(s -> func.apply(s))
                 .join(Joiner.on(NEW_LINE));
-        return join;
     }
 
     private Multimap<String, String> firstDbSchemasTables() {

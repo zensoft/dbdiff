@@ -22,4 +22,15 @@ public class Mapper {
                 .toList();
     }
 
+    public static List<String> getIndexesMapper(List<Map<String, Object>> list) {
+        return FluentIterable.from(list)
+                .transform(new Function<Map<String, Object>, String>() {
+                    @Override
+                    public String apply(Map<String, Object> stringObjectMap) {
+                        return stringObjectMap.get("table_name") + "-" + stringObjectMap.get("index_name");
+                    }
+                })
+                .toList();
+    }
+
 }

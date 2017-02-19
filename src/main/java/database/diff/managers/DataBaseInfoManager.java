@@ -1,23 +1,16 @@
 package database.diff.managers;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Supplier;
 import com.google.common.collect.*;
 import database.diff.constant.Queries;
 import database.diff.mappers.Mapper;
 import database.diff.model.DataBaseInfo;
 import database.diff.model.DbCredentials;
-import database.diff.utils.Printer;
 import database.diff.utils.Utils;
 import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.Handle;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static database.diff.model.DataBaseInfo.*;
 import static database.diff.utils.Utils.toStr;
@@ -40,12 +33,19 @@ public class DataBaseInfoManager {
         try (Handle handle = this.dbi.open()){
             List<String> schemas = getSchemas(handle);
             Multimap<String,String> schemasTables = getSchemasTables(handle, schemas);
+            List<String> indexes = getIndexes(handle);
             DataBaseInfoBuilder builder = new DataBaseInfoBuilder()
                     .name(dbCredentials.getName())
+                    .indexes(indexes)
                     .schemas(schemas)
                     .schemasTables(schemasTables);
             return builder.build();
         }
+    }
+
+    private List<String> getIndexes(Handle handle) {
+        List<Map<String, Object>> list = handle.createQuery(Queries.SELECT_ALL_INDEXED).list();
+        return Mapper.getIndexesMapper(list);
     }
 
     private List<String> getSchemas(Handle handle) {
